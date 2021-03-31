@@ -25,15 +25,5 @@ app.get("/", (req, res) => {
   res.render("index.ejs");
 });
 
-// app.get("/register", (req, res) => {
-//   res.render("register.ejs");
-// });
-
-// app.post("/register", async (req, res) => {
-//   const isoDate = new Date(req.body.timestamp).toISOString();
-//   //validate request before saving a user
-//   //console.log(isoDate);
-// });
-
 const port = 3000;
 app.listen(port, () => console.log("Server up and running"));
