@@ -2,54 +2,56 @@ const router = require("express").Router();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const Joi = require("@hapi/joi");
-const { registerValidation, timeStampValidation, carFilterValidation } = require("../helper/validation");
+const {
+  registerValidation,
+  timeStampValidation,
+  carFilterValidation,
+} = require("../helper/validation");
 
 const User = require("../model/User"); // this is what we store in database
-const Car = require('../model/Car');
-
+const Car = require("../model/Car");
 
 //REGISTER
 router.get("/register", (req, res) => {
-    res.render("register.ejs");
-  });
+  res.render("register.ejs");
+});
 
 router.post("/register", async (req, res) => {
-    //validate request before saving a user
-    const { error } = registerValidation(req.body);
-    if (error) return res.status(400).send(error.details[0].message);
-  
-    //Hash Password in database
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(req.body.password, salt);
+  //validate request before saving a user
+  const { error } = registerValidation(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
 
-    const isoDate = new Date(req.body.timestamp).toISOString();
-  
-    //Create new user
-    const user = new User({
-      username: req.body.username,
-      displayusername: req.body.displayusername,
-      password: hashedPassword, 
-      timestamp: isoDate,
-    });
-  
-    try {
-      const savedUser = await user.save();
-      //user id is just some data to identify with token, anything can do
-      const token = jwt.sign({ _id: savedUser._id }, process.env.TOKEN_SECRET); 
-      res.header("auth_token", token).json({
-        token: token,
-        displayusername: user.displayusername,
-        userid: user._id,
-      });
-    } catch (error) {
-      res.status(403).send("Failed to Register");
-    }
+  //Hash Password in database
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(req.body.password, salt);
+
+  const isoDate = new Date(req.body.timestamp).toISOString();
+
+  //Create new user
+  const user = new User({
+    username: req.body.username,
+    displayusername: req.body.displayusername,
+    password: hashedPassword,
+    timestamp: isoDate,
   });
 
+  try {
+    const savedUser = await user.save();
+    //user id is just some data to identify with token, anything can do
+    const token = jwt.sign({ _id: savedUser._id }, process.env.TOKEN_SECRET);
+    res.header("auth_token", token).json({
+      token: token,
+      displayusername: user.displayusername,
+      userid: user._id,
+    });
+  } catch (error) {
+    res.status(403).send("Failed to Register");
+  }
+});
 
 //GET PROFILE
 router.get("/getprofile", verifyToken, async (req, res) => {
-  //validate request before saving a user
+  //validate reqdockeruest before saving a user
   const { error } = timeStampValidation(req.body);
   if (error) return res.status(403).send(error.details[0].message);
 
@@ -137,21 +139,46 @@ router.get("/carlist", verifyToken, async (req, res) => {
 
       const startIndex = (pageindex - 1) * pagesize;
       const endIndex = pageindex * pagesize;
-      
-      const searchResult = Car.carList.filter((car) => {
-          if (carname == null) {
-              carname = "";
-          }
-        return car.carname.toLowerCase().includes(carname.toLowerCase());
-      });
 
-      const result = searchResult.slice(startIndex, endIndex);
+      const wildcardFilterBy = (str) =>
+        Car.carList.filter((car) =>
+          new RegExp("^" + str.toLowerCase().replace(/\*/g, ".*") + "$").test(
+            car.carname.toLowerCase()
+          )
+        );
 
-      res.json({
-          list: result,
-          totalcount: searchResult.length,
-      })
-      
+      if (carname == null || carname.trim() == "") {
+        carname = "";
+        const allCarList = Car.carList.slice(startIndex, endIndex);
+        res.json({
+          list: allCarList,
+          totalcount: Car.carList.length,
+        });
+      } else {
+        if (carname.includes("*")) {
+          //Perform wildcard search
+          const wildcardSearchResult = wildcardFilterBy(carname);
+          const wildcardResult = wildcardSearchResult.slice(
+            startIndex,
+            endIndex
+          );
+          res.json({
+            list: wildcardResult,
+            totalcount: wildcardResult.length,
+          });
+        } else {
+          //Normal Search
+          const searchResult = Car.carList.filter((car) => {
+            return car.carname.toLowerCase().includes(carname.toLowerCase());
+          });
+
+          const result = searchResult.slice(startIndex, endIndex);
+          res.json({
+            list: result,
+            totalcount: searchResult.length,
+          });
+        }
+      }
     }
   });
 });

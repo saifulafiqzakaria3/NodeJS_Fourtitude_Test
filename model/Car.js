@@ -124,6 +124,28 @@ const carList = [
           {id: 122, name: "2020 1.5 TC Premium", price: "187390"},
       ],
     },
+    {
+      id: 13,
+      carname: "Alza",
+      brand: "Perodua",
+      description: "1.5 7 Seater Car",
+      variance: [
+          {id: 131, name: "E Manual", price: "24090"},
+          {id: 132, name: "G", price: "33490"},
+          {id: 133, name: "GXtra", price: "34990"},
+      ],
+    },
+    {
+      id: 14,
+      carname: "Bezza",
+      brand: "Perodua",
+      description: "1.5 Fuel Saving Car",
+      variance: [
+          {id: 141, name: "E Manual", price: "24090"},
+          {id: 142, name: "G", price: "33490"},
+          {id: 143, name: "GXtra", price: "34990"},
+      ],
+    },
   ];
 
   const motorList = [
