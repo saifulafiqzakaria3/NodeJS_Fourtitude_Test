@@ -25,5 +25,5 @@ app.get("/", (req, res) => {
   res.render("index.ejs");
 });
 
-const port = 4200;
+const port = 3000;
 app.listen(port, () => console.log("Server up and running"));
